@@ -1,0 +1,64 @@
+# =====================================================================
+# Node
+# =====================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =====================================================================
+# Biến môi trường (đừng đẩy lên!)
+# =====================================================================
+.env
+.env.local
+.env.*.local
+
+# =====================================================================
+# Backup DB từ npm script db:backup
+# =====================================================================
+backup.sql
+*.dump
+*.bak
+
+# =====================================================================
+# Báo cáo LaTeX (giữ riêng, không đẩy lên Git)
+# =====================================================================
+BaoCao_ProjectIII.tex
+BaoCao_ProjectIII.pdf
+BaoCao_ProjectIII.aux
+BaoCao_ProjectIII.log
+BaoCao_ProjectIII.out
+BaoCao_ProjectIII.toc
+BaoCao_ProjectIII.lof
+BaoCao_ProjectIII.lot
+BaoCao_ProjectIII.synctex.gz
+BaoCao_ProjectIII.fls
+BaoCao_ProjectIII.fdb_latexmk
+_minted/
+_minted-*/
+compile*.log
+
+# Các ảnh chỉ dùng trong báo cáo
+Giaotiepclientserver.png
+bot_decision_flow.png
+
+# =====================================================================
+# Editor / IDE
+# =====================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# =====================================================================
+# OS
+# =====================================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =====================================================================
+# Local agent / build cache
+# =====================================================================
+.claude/

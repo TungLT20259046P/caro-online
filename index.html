@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Game Caro 3x3</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- ================= MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ ================= -->
+    <div id="authScreen" class="auth-container">
+        <div class="auth-box">
+            <h1 id="authTitle">Đăng Nhập</h1>
+            <p style="color: #bdc3c7; margin-bottom: 20px;">Game Caro - 20259046P</p>
+            
+            <form id="authForm">
+                <input type="text" id="usernameInput" class="auth-input" placeholder="Tên đăng nhập" required autocomplete="username">
+                <input type="password" id="passwordInput" class="auth-input" placeholder="Mật khẩu" required autocomplete="current-password">
+                
+                <button type="submit" id="btnSubmitAuth" class="btn-primary" style="width: 100%; margin-top: 10px;">Vào Game</button>
+            </form>
+
+            <!-- Thay đổi margin-top và margin-bottom để kéo các phần tử lại gần nhau -->
+            <p id="authError" style="color: #e74c3c; font-weight: bold; margin-top: 5px; margin-bottom: 5px; min-height: 20px;"></p>
+            
+            <p class="toggle-auth" style="margin-top: 0; margin-bottom: 20px;">
+                <span id="authToggleText">Chưa có tài khoản?</span> 
+                <a href="#" id="btnToggleAuth" style="color: #3b82f6; text-decoration: none; font-weight: bold;">Đăng ký ngay</a>
+            </p>
+
+            <hr style="border-color: #555; margin: 0 0 15px 0;">
+            <button type="button" id="btnLocalPvPAuth" class="btn-primary" style="background-color: #3b82f6; width: 100%;">PvP 1 máy</button>
+        </div>
+    </div>
+    <div id="mainMenu" style="display: none;">
+        <h1>Game Caro</h1>
+        <p>Sinh viên thực hiện: 20259046P</p>
+        <p id="connectionStatus" style="color: #e74c3c; font-weight: bold; margin-top: 15px; font-size: 14px;">🔴 Chưa kết nối với Server...</p>
+        <div class="menu-buttons">
+            <button id="btnPvE" class="btn-primary">Đánh với Máy (PvE)</button>
+            <button id="btnPvPOnline" class="btn-primary" style="background-color: #e74c3c;">Đánh Online (PvP)</button>
+            <button id="btnSpectate" class="btn-primary" style="background-color: #8b5cf6;">Dự khán (Spectator)</button>
+            <button id="btnLeaderboard" class="btn-primary" style="background-color: #f59e0b;">Bảng xếp hạng ELO</button>
+        </div>
+    </div>
+
+    <div id="gameScreen" style="display: none;">
+        <!-- HUY HIỆU CHẾ ĐỘ DỰ KHÁN -->
+        <div id="spectateBanner" style="display: none; position: fixed; top: 20px; left: 20px; background: #8b5cf6; color: #fff; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; z-index: 60; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">Chế độ dự khán</div>
+        <!-- THANH CÔNG CỤ PHÍA TRÊN -->
+        <div class="top-bar" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 400px; margin-bottom: 15px; padding: 0 10px; box-sizing: border-box; gap: 5px;">
+            
+            <button id="btnBack" class="btn-small" style="height: 34px; box-sizing: border-box; margin: 0; padding: 0 12px; white-space: nowrap; display: flex; align-items: center; justify-content: center;">Quay lại</button>
+
+            <div id="botDifficultyContainer" style="display: none; flex: 1; text-align: center; height: 34px;">
+                <div style="display: inline-flex; height: 100%; box-sizing: border-box; border: 2px solid #000; border-radius: 6px; overflow: hidden; background-color: #fff; align-items: center; justify-content: center;">
+                    <div style="background-color: #000; color: #fff; padding: 0 8px; height: 100%; display: flex; align-items: center; font-weight: bold; font-size: 13px; white-space: nowrap;">
+                        Chế độ
+                    </div>
+                    <select id="botDifficulty" style="border: none; outline: none; padding: 0 4px; font-weight: bold; font-size: 13px; background: transparent; cursor: pointer; height: 100%;">
+                        <option value="easy">Dễ</option>
+                        <option value="medium">TB</option>
+                        <option value="hard">Khó</option>
+                    </select>
+                </div>
+            </div>
+
+            <select id="winConditionSelect" class="select-box" style="height: 34px; box-sizing: border-box; margin: 0; padding: 0 8px; font-size: 13px; white-space: nowrap; cursor: pointer;">
+                <option value="5">Luật: 5 Quân</option>
+                <option value="3">Luật: 3 Quân</option>
+            </select>
+            <!-- Nút chat (chỉ hiện trên mobile, khi PvP online) -->
+            <button id="chatToggleBtn" class="btn-small chat-toggle-btn-mobile" style="display: none; height: 34px; box-sizing: border-box; margin: 0; padding: 0 12px; white-space: nowrap; position: relative; align-items: center; justify-content: center;" title="Mở chat">
+                💬
+                <span id="chatUnreadDot" class="chat-unread-dot" style="display: none;"></span>
+            </button>
+        </div>
+        <h2 id="statusMessage">Đang chọn vai trò...</h2>
+        
+        <div id="scoreboard" style="font-size: 18px; font-weight: bold; margin-bottom: 15px;">
+            <span id="player1Name">Người chơi 1</span>: <span id="scorePlayer">0</span> 
+            | 
+            <span id="player2Name">Người chơi 2</span>: <span id="scoreBot">0</span>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
+
+        <div class="game-controls" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%; max-width: 400px; padding: 0 10px; box-sizing: border-box;">
+            <button id="restartBtn" class="btn-primary">Bắt đầu / Chơi lại</button>
+            
+            <div id="rematchControls" style="display: none; gap: 10px; width: 100%;">
+                <button id="btnAcceptRematch" class="btn-primary" style="background-color: #2ecc71; flex: 1;">✔️ Đồng Ý</button>
+                <button id="btnDeclineRematch" class="btn-primary" style="background-color: #e74c3c; flex: 1;">❌ Từ Chối</button>
+            </div>
+
+            <button id="btnSurrender" class="btn-primary" style="background-color: #e74c3c; display: none;">Đầu Hàng / FF</button>
+        </div>
+        <!-- ================= KHUNG CHAT (PvP Online) ================= -->
+        <!-- Desktop: gắn cố định bên phải bàn cờ. Mobile: popup từ icon top bar -->
+        <div id="chatContainer" class="chat-container" style="display: none;">
+                <div class="chat-header">
+                    <span>💬 Chat</span>
+                    <span id="chatRoomCode" class="chat-room-code">--</span>
+                    <span class="chat-close" id="chatCloseBtn" title="Đóng (chỉ trên mobile)">×</span>
+                </div>
+                <div id="chatMessages" class="chat-messages"></div>
+                <div class="chat-input-bar">
+                    <input type="text" id="chatInput" class="chat-input" 
+                        placeholder="Nhập tin nhắn... (gõ /help để xem lệnh)" maxlength="200">
+                    <button id="chatSendBtn" class="chat-send-btn">Gửi</button>
+                </div>
+        </div>
+    </div>
+    
+    <div id="pvpModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModal">&times;</span>
+            <h2 style="color: #000; margin-bottom: 15px;">ĐÁNH PVP</h2>
+            
+            <div class="pvp-options" style="display: flex; flex-direction: column; gap: 15px;">
+                <!-- Nút PvP 1 máy -->
+                <button id="btnLocalPvPMenu" class="btn-primary" style="background-color: #3b82f6; width: 100%;">PvP 1 máy</button>
+
+                <!-- Đường kẻ phân tách in đậm, viền đen -->
+                <hr style="border-color: #000; border-width: 1px; width: 100%; margin: 0;">
+
+                <!-- CHỌN LUẬT CHƠI CHO TRẬN ONLINE -->
+                <select id="pvpWinCondition" class="select-box" style="width: 100%; border: 2px solid #000; padding: 10px; font-size: 16px; margin-bottom: 5px;">
+                    <option value="5">Luật chơi: 5 Quân</option>
+                    <option value="3">Luật chơi: 3 Quân</option>
+                </select>
+
+                <!-- Khu vực Đánh Online (Gộp chung) -->
+                <button id="btnRandomMatch" class="btn-primary" style="background-color: #16a34a; width: 100%;">Tìm Trận</button>
+                <button id="btnCreateRoom" class="btn-primary" style="background-color: #3b82f6; width: 100%;">Tạo Phòng (Mã CAROxxx)</button>
+
+                <!-- Hộp nhập Code chia 2 phần Đen - Trắng -->
+                <div style="display: flex; gap: 10px; width: 100%; align-items: stretch;">
+                    <div style="display: flex; flex: 1; border: 2px solid #000; border-radius: 8px; overflow: hidden; background-color: #fff;">
+                        <!-- Nửa đen -->
+                        <div style="background-color: #000; color: #fff; padding: 0 15px; display: flex; align-items: center; font-weight: bold; font-size: 16px;">
+                            CARO
+                        </div>
+                        <!-- Nửa trắng -->
+                        <input type="text" id="inputRoomCode" inputmode="numeric" placeholder="5123" maxlength="4" style="width: 100%; padding: 12px 10px; border: none; font-weight: bold; font-size: 18px; outline: none; color: #000; background: transparent;">
+                    </div>
+                    
+                    <button id="btnJoinRoom" class="btn-primary" style="background-color: #16a34a; padding: 0 25px; margin: 0;">Vào</button>
+                </div>
+            <!-- ===== KHỐI THÁCH ĐẤU TRỰC TIẾP ===== -->
+                <hr style="border-color: #000; border-width: 1px; width: 100%; margin: 0;">
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="font-weight: bold; color: #000;">🎯 Thách đấu trực tiếp</div>
+                    <div style="display: flex; gap: 8px; width: 100%; align-items: stretch;">
+                        <input type="text" id="challengeTargetInput" placeholder="Tên đối thủ..." maxlength="32" 
+                            style="flex: 1; padding: 10px; border: 2px solid #000; border-radius: 8px; font-size: 14px; outline: none; color: #000; background: #fff;">
+                        <button id="btnSendChallenge" class="btn-primary" style="background-color: #e67e22; padding: 0 18px; margin: 0; white-space: nowrap;">Gửi</button>
+                    </div>
+                </div>
+            </div>
+            <p id="pvpStatus" style="color: #f1c40f; font-weight: bold; margin-top: 20px; min-height: 20px;"></p>
+        </div>
+    </div>
+    <!-- ================= MODAL: ĐANG CHỜ ĐỐI THỦ PHẢN HỒI (cho người gửi) ================= -->
+<div id="challengeWaitingModal" class="modal">
+    <div class="modal-content" style="max-width: 350px;">
+        <h2 style="color: #000; margin-top: 0;">⏳ Đang chờ phản hồi...</h2>
+        <p>Đã gửi thách đấu đến<br><b id="challengeWaitingTarget" style="color: #e67e22;">--</b></p>
+        <p>Luật: <b id="challengeWaitingRule" style="color: #000;">--</b></p>
+        <p style="color: #6b7280; font-size: 13px;">Còn lại: <span id="challengeWaitingCountdown">30</span>s</p>
+        <button id="btnCancelChallenge" class="btn-primary" style="background-color: #6b7280; margin-top: 10px;">Hủy lời mời</button>
+    </div>
+</div>
+
+<!-- ================= MODAL: NHẬN LỜI MỜI THÁCH ĐẤU (cho người nhận) ================= -->
+<div id="challengeReceivedModal" class="modal">
+    <div class="modal-content" style="max-width: 380px;">
+        <h2 style="color: #000; margin-top: 0;">⚔️ Lời mời thách đấu!</h2>
+        <p style="font-size: 18px;"><b id="challengeFromUsername" style="color: #e67e22;">--</b> muốn thách đấu bạn</p>
+        <p>Luật chơi: <b id="challengeReceivedRule" style="color: #000;">--</b></p>
+        <p style="color: #6b7280; font-size: 13px;">Còn lại: <span id="challengeReceivedCountdown">30</span>s</p>
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+            <button id="btnAcceptChallenge" class="btn-primary" style="background-color: #16a34a; flex: 1;">✅ Đồng ý</button>
+            <button id="btnDeclineChallenge" class="btn-primary" style="background-color: #e74c3c; flex: 1;">❌ Từ chối</button>
+        </div>
+    </div>
+</div>
+    <!-- ================= BẢNG QUẢN LÝ TÀI KHOẢN (GÓC PHẢI) ================= -->
+    <!-- Nút User Icon góc phải -->
+    <div id="userProfileBtn" class="user-icon-btn" style="display: none;">👤</div>
+
+    <!-- Modal Quản lý Tài khoản -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeUserModal">&times;</span>
+            
+            <!-- Giao diện xem thông tin -->
+            <div id="userInfoView">
+                <!-- KHÔI PHỤC TIÊU ĐỀ ĐỂ ĐẨY THANH TÌM KIẾM XUỐNG -->
+                <h2 style="color: #000; margin-top: -10px; margin-bottom: 15px;">TRUNG TÂM TÀI KHOẢN</h2>
+                
+                <!-- THANH TÌM KIẾM NGƯỜI CHƠI -->
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <input type="text" id="searchUserInput" class="auth-input" style="margin: 0; border: 1px solid #000; padding: 8px; color: #000; background: #fff;" placeholder="Tìm tên người chơi...">
+                    <button id="btnSearchUser" class="btn-primary" style="padding: 8px 15px; background-color: #34495e;">Tìm</button>
+                </div>
+
+                <!-- TÊN & NÚT QUYỀN RIÊNG TƯ -->
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <p style="font-size: 18px; margin: 0;">👤 <b id="modalUsername" style="color: #2ecc71;">...</b></p>
+                        <button id="btnTogglePrivacy" class="btn-small" style="padding: 4px 8px; font-size: 12px; border: 1px solid #000; cursor: pointer;" title="Bật/Tắt riêng tư">Công khai</button>
+                    </div>
+                    <p style="margin: 0; font-weight: bold; color: #f39c12; font-size: 18px;">ELO: <span id="modalElo">0</span></p>
+                </div>
+                
+                <hr style="border-color: #ccc; margin: 15px 0;">
+                <!-- MA TRẬN TỈ LỆ THẮNG -->
+                <h3 style="font-size: 15px; text-align: left; margin: 0 0 10px 0;">📊 Tỉ lệ thắng</h3>
+                <div class="winrate-matrix">
+                    <div class="matrix-header">Chế độ</div>
+                    <div class="matrix-header">PvE-E</div>
+                    <div class="matrix-header">PvE-M</div>
+                    <div class="matrix-header">PvE-H</div>
+                    <div class="matrix-header" style="background-color: #e74c3c;">PvP</div>
+                    
+                    <div class="matrix-row-label">Luật 3</div>
+                    <div id="wr-pvee-3">0%</div>
+                    <div id="wr-pvem-3">0%</div>
+                    <div id="wr-pveh-3">0%</div>
+                    <div id="wr-pvp-3">0%</div>
+                    
+                    <div class="matrix-row-label">Luật 5</div>
+                    <div id="wr-pvee-5">0%</div>
+                    <div id="wr-pvem-5">0%</div>
+                    <div id="wr-pveh-5">0%</div>
+                    <div id="wr-pvp-5">0%</div>
+                </div>
+
+                <hr style="border-color: #ccc; margin: 15px 0;">
+                
+                <div style="display: flex; gap: 10px; flex-direction: column;">
+                    <button id="btnShowHistory" class="btn-primary" style="background-color: #f39c12; width: 100%;">Lịch sử đấu</button>
+                    <button id="btnShowEditForm" class="btn-primary" style="background-color: #3b82f6; width: 100%;">Chỉnh sửa thông tin</button>
+                    <button id="btnSignOut" class="btn-primary" style="background-color: #e74c3c; border: none; width: 100%;">Đăng xuất</button>
+                </div>
+            </div>
+
+            <!-- Giao diện Form chỉnh sửa -->
+            <div id="userEditView" style="display: none;">
+                <h2 style="color: #000; margin-bottom: 15px;">ĐỔI THÔNG TIN</h2>
+                <p style="color: #555; font-size: 14px; margin-bottom: 15px;">Để trống nếu không muốn đổi</p>
+                <form id="editProfileForm">
+                    <input type="text" id="newUsername" class="auth-input" style="border: 1px solid #000; color: #000; background: #fff;" placeholder="Tên hiển thị mới">
+                    <input type="password" id="newPassword" class="auth-input" style="border: 1px solid #000; color: #000; background: #fff;" placeholder="Mật khẩu mới">
+                    
+                    <p id="editProfileError" style="color: #e74c3c; font-size: 14px; margin-bottom: 10px; min-height: 15px;"></p>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" id="btnSaveProfile" class="btn-primary" style="flex: 1; background-color: #2ecc71;">Lưu</button>
+                        <button type="button" id="btnCancelEdit" class="btn-primary" style="flex: 1; background-color: #95a5a6;">Hủy</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Giao diện Lịch sử đấu -->
+            <div id="userHistoryView" style="display: none;">
+                <!-- margin-top: -10px để kéo tiêu đề lên, tạo khoảng cách 15px so với viền trên. 
+                     margin-bottom: 15px tạo khoảng cách đúng bằng 15px so với đường kẻ -->
+                <h2 style="color: #000; margin-top: -10px; margin-bottom: 15px;">LỊCH SỬ ĐẤU</h2>
+                
+                <!-- Đường kẻ đen phân cách vùng -->
+                <hr style="border: none; border-top: 1px solid #000; margin: 0 0 15px 0;">
+                
+                <div id="historyContainer" class="history-container">
+                    <p style="font-size: 14px; color: #7f8c8d;">Chưa có dữ liệu trận đấu...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ================= MODAL HỒ SƠ NGƯỜI CHƠI KHÁC (TÌM KIẾM) ================= -->
+    <div id="searchProfileModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeSearchProfileModal">&times;</span>
+            <h2 style="color: #000; margin-top: -10px; margin-bottom: 15px;">HỒ SƠ NGƯỜI CHƠI</h2>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <p style="font-size: 18px; margin: 0;">👤 <b id="searchedUsername" style="color: #3b82f6;">...</b></p>
+                <p style="margin: 0; font-weight: bold; color: #f39c12; font-size: 18px;">ELO: <span id="searchedElo">0</span></p>
+            </div>
+            
+            <!-- Nút thách đấu trực tiếp từ hồ sơ -->
+            <div style="display: flex; gap: 8px; align-items: center; justify-content: center; margin-bottom: 10px;">
+                <select id="challengeRuleFromProfile" class="select-box" style="border: 1px solid #000; padding: 6px;">
+                    <option value="5">Luật 5</option>
+                    <option value="3">Luật 3</option>
+                </select>
+                <button id="btnChallengeFromProfile" class="btn-primary" style="background-color: #e67e22; padding: 8px 16px;">🎯 Thách đấu</button>
+            </div>
+            
+            <hr style="border-color: #ccc; margin: 15px 0;"> 
+            
+            <h3 style="font-size: 15px; text-align: left; margin: 0 0 10px 0;">📊 Tỉ lệ thắng</h3>
+            <div class="winrate-matrix">
+                <div class="matrix-header">Chế độ</div>
+                <div class="matrix-header">PvE-E</div>
+                <div class="matrix-header">PvE-M</div>
+                <div class="matrix-header">PvE-H</div>
+                <div class="matrix-header" style="background-color: #e74c3c;">PvP</div>
+                
+                <div class="matrix-row-label">Luật 3</div>
+                <!-- Thêm tiền tố s- (search) để không bị trùng ID với bảng của mình -->
+                <div id="s-wr-pvee-3">0%</div>
+                <div id="s-wr-pvem-3">0%</div>
+                <div id="s-wr-pveh-3">0%</div>
+                <div id="s-wr-pvp-3">0%</div>
+                
+                <div class="matrix-row-label">Luật 5</div>
+                <div id="s-wr-pvee-5">0%</div>
+                <div id="s-wr-pvem-5">0%</div>
+                <div id="s-wr-pveh-5">0%</div>
+                <div id="s-wr-pvp-5">0%</div>
+            </div>
+            
+            <!-- Mặc định hiện ghi chú "ẩn với người lạ"; admin sẽ thay bằng lịch sử đấu -->
+            <div id="searchedHistoryBlock">
+                <p id="searchedHistoryNote" style="font-size: 12px; color: #7f8c8d; margin-top: 20px; text-align: center; font-style: italic;">
+                    *Lịch sử đấu bị ẩn với người lạ
+                </p>
+            </div>
+        </div>
+    </div>
+    <!-- ================= MODAL: BẢNG XẾP HẠNG ELO ================= -->
+<div id="leaderboardModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <span class="close-btn" onclick="document.getElementById('leaderboardModal').style.display='none'">&times;</span>
+        <h2 style="margin-top: 0;">🏆 Bảng xếp hạng ELO</h2>
+        <p style="color: #666; font-size: 13px;">Top 100 người chơi có điểm ELO cao nhất</p>
+        <div id="leaderboardContent" style="max-height: 500px; overflow-y: auto;">
+            <p>Đang tải...</p>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODAL: DỰ KHÁN (SPECTATOR) ================= -->
+<div id="spectateModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" id="closeSpectateModal">&times;</span>
+        <h2 style="color: #000; margin-bottom: 10px;">DỰ KHÁN TRẬN ĐẤU</h2>
+        <p style="color: #555; font-size: 14px; margin-bottom: 15px;">Nhập mã phòng để xem trực tiếp một trận đấu đang diễn ra</p>
+
+        <div style="display: flex; gap: 10px; width: 100%; align-items: stretch;">
+            <div style="display: flex; flex: 1; border: 2px solid #000; border-radius: 8px; overflow: hidden; background-color: #fff;">
+                <div style="background-color: #000; color: #fff; padding: 0 15px; display: flex; align-items: center; font-weight: bold; font-size: 16px;">
+                    CARO
+                </div>
+                <input type="text" id="inputSpectateCode" inputmode="numeric" placeholder="5123" maxlength="4" style="width: 100%; padding: 12px 10px; border: none; font-weight: bold; font-size: 18px; outline: none; color: #000; background: transparent;">
+            </div>
+            <button id="btnDoSpectate" class="btn-primary" style="background-color: #8b5cf6; padding: 0 25px; margin: 0;">Xem</button>
+        </div>
+        <p id="spectateStatus" style="color: #e74c3c; font-weight: bold; margin-top: 20px; min-height: 20px;"></p>
+    </div>
+</div>
+
+<!-- ================= MODAL: REPLAY (XEM LẠI TRẬN ĐẤU) ================= -->
+<div id="replayModal" class="modal">
+    <div class="modal-content" style="max-width: 460px; max-height: 95vh; overflow-y: auto;">
+        <span class="close-btn" id="closeReplayModal">&times;</span>
+        <h2 id="replayTitle" style="color: #000; margin-top: -5px; margin-bottom: 10px; font-size: 16px;">📼 Replay</h2>
+
+        <!-- Bộ chọn ván (chỉ hiện khi loạt trận có nhiều ván) -->
+        <div id="replayGameTabs" style="display: none; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px;"></div>
+
+        <!-- #gameCanvas sẽ được chuyển vào đây khi mở modal -->
+        <div id="replayCanvasSlot" style="display: flex; justify-content: center; min-height: 120px;"></div>
+
+        <div id="replayCounter" style="font-weight: bold; margin: 10px 0 6px; color: #000;">Nước 0 / 0</div>
+        <input type="range" id="replaySlider" min="0" max="0" value="0" step="1" style="width: 100%; cursor: pointer;">
+
+        <div class="replay-controls">
+            <button id="rpFirst" class="btn-small" title="Về nước đầu">⏮</button>
+            <button id="rpPrev" class="btn-small" title="Lùi 1 nước">◀</button>
+            <button id="rpPlay" class="btn-small" style="min-width: 84px; background: #8b5cf6; color: #fff;">▶ Phát</button>
+            <button id="rpNext" class="btn-small" title="Tiến 1 nước">▶</button>
+            <button id="rpLast" class="btn-small" title="Tới nước cuối">⏭</button>
+            <select id="rpSpeed" class="select-box" style="border: 1px solid #000; padding: 6px;">
+                <option value="0.5">0.5x</option>
+                <option value="1" selected>1x</option>
+                <option value="2">2x</option>
+                <option value="4">4x</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODAL: ADMIN PANEL ================= -->
+<div id="adminModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+        <span class="close-btn" onclick="handleAdminClose()">&times;</span>
+        <h2 style="margin-top: 0; color: #dc2626;">⚙️ Admin Panel</h2>
+        
+        <div class="admin-toolbar" style="margin: 15px 0;">
+            <input type="text" id="adminSearchInput" placeholder="Tìm theo username..."
+                class="auth-input" style="width: 60%; display: inline-block; margin: 0;">
+            <div class="admin-toolbar-buttons" style="display: inline-block;">
+                <button class="btn-small" onclick="loadAdminUsers()" style="margin-left: 10px;">Tìm</button>
+                <button class="btn-small" onclick="loadAdminLogs()" style="background:#fef3c7;">📜 Lịch sử admin</button>
+            </div>
+        </div>
+        
+        <div id="adminUserList" style="max-height: 450px; overflow-y: auto;">
+            <p>Bấm "Tìm" để tải danh sách user.</p>
+        </div>
+    </div>
+</div>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="bot.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
